@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                // Clone the GitHub repository
+                git 'https://github.com/Chaitanyagude/web-application.git'
+                
+                // Build Docker image
+                sh 'docker build -t my-flask-app .'
+            }
+        }
+        stage('Test') {
+            steps {
+                // Install test dependencies
+                sh 'pip install -r app/requirements.txt'
+
+                // Run unit tests
+                sh 'python app/test.py'
+
+                // Run linting checks
+                sh 'flake8 app'
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                // Tag and push Docker image to Docker Hub
+                sh 'docker tag my-flask-app:latest chaitug/my-flask-app:latest'
+                sh 'docker push chaitug/my-flask-app:latest'
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps {
+                // Apply Kubernetes manifests
+                sh 'kubectl apply -f kubernetes/deployment.yaml'
+                sh 'kubectl apply -f kubernetes/service.yaml'
+            }
+        }
+    }
+}
